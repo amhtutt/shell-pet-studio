@@ -1,0 +1,11 @@
+{
+  "name": "shell-pet",
+  "version": "1.0.0",
+  "description": "Add a shell-pet hermit crab badge to your README.",
+  "bin": { "shell-pet": "index.mjs" },
+  "files": ["index.mjs"],
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "repository": "github:lma0/shell-pet"
+}
