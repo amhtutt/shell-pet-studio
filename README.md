@@ -3,7 +3,7 @@
 A tiny hermit crab for every repository.
 
 <!-- shell-pet -->
-[![shell-pet](https://shell-pet.vercel.app/api/pet/lma0/shell-pet.svg)](https://github.com/lma0/shell-pet)
+[![shell-pet](https://shell-pet.vercel.app/api/pet/amhtutt/shell-pet.svg)](https://github.com/amhtutt/shell-pet)
 <!-- /shell-pet -->
 
 Stars feed it, releases grow its shell, contributors decorate it, and neglect empties it. Every repo hatches its own crab, seeded from `owner/repo`.

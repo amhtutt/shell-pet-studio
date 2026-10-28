@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error plain JS module
 import { insert, parseRemote, snippet } from "../cli/index.mjs";
 
 describe("cli", () => {

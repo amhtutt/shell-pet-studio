@@ -8,7 +8,7 @@ import { xmlProblems } from "./xml";
 
 const LANG_NAMES: Record<string, string> = { cpp: "C++", shell: "Shell" };
 const base: PetState = {
-  owner: "lma0",
+  owner: "amhtutt",
   repo: "shell-pet",
   traits: traitsFromSeed(42),
   stage: "adult",

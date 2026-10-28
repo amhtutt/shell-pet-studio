@@ -22,13 +22,13 @@ export function GET(req: Request) {
   const stage = (STAGES as readonly string[]).includes(q.get("stage") ?? "") ? (q.get("stage") as Stage) : "adult";
   const mood = (MOODS as readonly string[]).includes(q.get("mood") ?? "") ? (q.get("mood") as Mood) : "happy";
   const seedParam = q.get("seed");
-  const seed = seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) : repoSeed("lma0", seedParam ?? "shell-pet");
+  const seed = seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) : repoSeed("amhtutt", seedParam ?? "shell-pet");
   const traits = traitsFromSeed(seed);
   if (q.get("shiny") === "1") traits.shiny = true;
 
   const svg = render(
     {
-      owner: q.get("owner") ?? "lma0",
+      owner: q.get("owner") ?? "amhtutt",
       repo: q.get("repo") ?? "shell-pet",
       traits,
       stage,

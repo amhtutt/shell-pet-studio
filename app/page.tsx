@@ -36,7 +36,7 @@ export default function Home() {
             <Link href="/gallery" className="hover:underline underline-offset-4">
               Gallery
             </Link>
-            <a href="https://github.com/lma0/shell-pet" className="hover:underline underline-offset-4">
+            <a href="https://github.com/amhtutt/shell-pet" className="hover:underline underline-offset-4">
               GitHub
             </a>
           </div>
@@ -119,7 +119,7 @@ export default function Home() {
       <footer className="bg-ink text-foam px-4 py-10">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row gap-4 justify-between">
           <code className="font-mono">npx shell-pet init</code>
-          <span className="text-sm opacity-70">MIT · made by lma0</span>
+          <span className="text-sm opacity-70">MIT · made by amhtutt</span>
         </div>
       </footer>
     </main>
