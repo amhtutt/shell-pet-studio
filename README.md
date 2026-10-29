@@ -1,5 +1,7 @@
 # shell-pet studio
 
+Live website: https://shell-pet-studio.vercel.app
+
 A responsive frontend redesign of shell-pet, based on the approved “Your code. Their home.” mockup. Includes the existing shell-pet crab art, interactive previews, language shells, mood and growth demos, light/dark previews, SVG download, and Markdown copying.
 
 ## See it immediately
@@ -55,7 +57,6 @@ The new repo is independent of `amhtutt/shell-pet`; it does not replace the curr
 | `src/demo.js` | Repository parsing, demo state, Markdown URLs |
 | `src/svg/` | Existing layered artwork renderer |
 | `src/lib/` | Deterministic traits, stage, language, and mood helpers |
-| `design-reference.png` | Approved visual reference |
 
 The badges are SVG documents containing embedded WebP art layers. They are not path-only vector drawings.
 
