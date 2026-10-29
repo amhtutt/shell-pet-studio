@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from scipy.ndimage import distance_transform_edt
+from scipy.ndimage import distance_transform_edt, label
 
 ROOT = Path(__file__).resolve().parent.parent
 ART = ROOT / "art"
@@ -257,6 +257,22 @@ def stage_layers():
     return out
 
 
+def trim_cell(cell):
+    """Drop small bits of neighbouring stickers that poke over the cell edge, then crop to the content."""
+    a = np.asarray(cell).copy()
+    solid = a[..., 3] > 40
+    labels, n = label(solid)
+    if n:
+        sizes = np.bincount(labels.ravel())
+        edge = set(np.unique(np.concatenate([labels[0], labels[-1], labels[:, 0], labels[:, -1]]))) - {0}
+        for i in edge:
+            if sizes[i] < 0.15 * solid.sum():
+                a[labels == i, 3] = 0
+    out = Image.fromarray(a)
+    bb = out.getchannel("A").point(lambda v: 255 if v > 40 else 0).getbbox()
+    return out.crop(bb) if bb else None
+
+
 def cut_sheet(name, cols, rows):
     """Split a sticker sheet into grid cells, trim each to its content."""
     path = ART / f"{name}.png"
@@ -270,8 +286,7 @@ def cut_sheet(name, cols, rows):
     for r in range(rows):
         for c in range(cols):
             cell = img.crop((round(x0 + c * cw), round(y0 + r * ch), round(x0 + (c + 1) * cw), round(y0 + (r + 1) * ch)))
-            cbb = cell.getchannel("A").point(lambda v: 255 if v > 40 else 0).getbbox()
-            cells.append(cell.crop(cbb) if cbb else None)
+            cells.append(trim_cell(cell))
     return cells
 
 

@@ -3,7 +3,7 @@ import { moodLabel, type Mood } from "@/lib/mood";
 import { shellScale, stageLabel, type Stage } from "@/lib/stage";
 import { BODY_COLORS, type Traits } from "@/lib/traits";
 import { ART } from "./art/assets";
-import { decoration, prop } from "./props";
+import { decoration, prop, resetSprites, spriteDefs } from "./props";
 import { backdrop, border, frame, WIDE } from "./scene";
 import { styles, type Theme } from "./styles";
 import { FONT, GOLD, esc, starPath } from "./util";
@@ -110,7 +110,7 @@ function crabLayer(mood: Mood, color: string): string {
 function moodProps(mood: Mood): string {
   switch (mood) {
     case "celebrating":
-      return CONFETTI.map(([x, y, rot], i) => prop("confetti", x, y, 12, `sp-fall sp-d${i % 4}`, rot)).join("");
+      return CONFETTI.map(([x, y, rot], i) => prop("confetti", x, y, 22, `sp-fall sp-d${i % 4}`, rot)).join("");
     case "anxious":
       return prop("papers", 238, 148, 34);
     case "curious":
@@ -127,14 +127,11 @@ function moodProps(mood: Mood): string {
 }
 
 const CONFETTI: [number, number, number][] = [
-  [40, -6, 20],
-  [92, -14, -30],
-  [150, -4, 40],
-  [214, 4, -15],
-  [20, 30, 10],
-  [244, 40, 60],
-  [120, -20, -45],
-  [190, 26, 25],
+  [36, -6, 20],
+  [110, -18, -30],
+  [182, -8, 40],
+  [244, 22, -15],
+  [4, 36, 60],
 ];
 const SHINY_SPARKLES: [number, number, number][] = [
   [0, 14, 18],
@@ -278,6 +275,7 @@ function wide(body: string, caption: Caption, opts: RenderOptions, ariaTitle: st
     svgOpen("wide", opts.size, `0 0 ${WIDE.w} ${WIDE.h}`, ariaTitle) +
     styles(opts.theme) +
     FILTERS +
+    spriteDefs() +
     frame() +
     backdrop() +
     `<g transform="${tall ? WIDE_FIT.tall : WIDE_FIT.normal}">${body}</g>` +
@@ -288,7 +286,7 @@ function wide(body: string, caption: Caption, opts: RenderOptions, ariaTitle: st
 }
 
 function square(body: string, opts: RenderOptions, ariaTitle: string): string {
-  return svgOpen("square", opts.size, "-14 -62 274 274", ariaTitle) + styles(opts.theme) + FILTERS + body + `</svg>`;
+  return svgOpen("square", opts.size, "-14 -62 274 274", ariaTitle) + styles(opts.theme) + FILTERS + spriteDefs() + body + `</svg>`;
 }
 
 function metaLines(stage: string, mood: string | null): string[] {
@@ -302,6 +300,7 @@ export function render(state: PetState, options: Partial<RenderOptions> = {}): s
   const abandoned = state.stage === "abandoned";
   const name = `${state.owner}/${state.repo}`;
   const aria = `${name}: ${stageLabel(state.stage)} hermit crab${abandoned ? "" : `, ${state.mood}`}`;
+  resetSprites();
   const body = creature(state);
   if (opts.layout === "square") return square(body, opts, aria);
 
@@ -322,6 +321,7 @@ export function render(state: PetState, options: Partial<RenderOptions> = {}): s
 /** Friendly fallback when the repo can't be found. Badges must always render. */
 export function renderLostEgg(owner: string, repo: string, options: Partial<RenderOptions> = {}): string {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  resetSprites();
   const body = `<g class="sp-bob">${img(ART.stages.egg)}</g>` + prop("question", 186, 58, 34);
   const aria = `${owner}/${repo}: lost egg`;
   if (opts.layout === "square") return square(body, opts, aria);

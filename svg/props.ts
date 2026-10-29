@@ -23,12 +23,29 @@ const SHEETS = ART;
 const r1 = (n: number) => Math.round(n * 10) / 10;
 const thin = (w = 2) => `stroke="${INK}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 
+// Each sticker's image data goes into <defs> once per badge and is reused with <use>, so ten sparkles cost one.
+const used = new Map<string, string>();
+
+/** Start a new badge: forget the stickers used by the previous one. */
+export function resetSprites(): void {
+  used.clear();
+}
+
+/** <defs> for every sticker used since resetSprites(). */
+export function spriteDefs(): string {
+  return used.size ? `<defs>${[...used.values()].join("")}</defs>` : "";
+}
+
+function spriteRef(key: string, s: Sprite): string {
+  const id = `sp-s-${key}`;
+  if (!used.has(id)) used.set(id, `<image id="${id}" href="${s.src}" width="${s.w}" height="${s.h}"/>`);
+  return id;
+}
+
 /** Place a sprite so its longer side is `size` units, centred on (x, y). */
-function image(s: Sprite, x: number, y: number, size: number, cls = "", rot = 0): string {
-  const k = size / Math.max(s.w, s.h);
-  const w = r1(s.w * k);
-  const h = r1(s.h * k);
-  const img = `<image href="${s.src}" x="${r1(-w / 2)}" y="${r1(-h / 2)}" width="${w}" height="${h}"/>`;
+function image(key: string, s: Sprite, x: number, y: number, size: number, cls = "", rot = 0): string {
+  const k = +(size / Math.max(s.w, s.h)).toFixed(4);
+  const img = `<use href="#${spriteRef(key, s)}" transform="scale(${k}) translate(${r1(-s.w / 2)} ${r1(-s.h / 2)})"/>`;
   return place(cls ? `<g class="${cls}">${img}</g>` : img, x, y, rot);
 }
 
@@ -67,7 +84,7 @@ const DRAWN: Record<PropName, (size: number) => string> = {
 
 export function prop(name: PropName, x: number, y: number, size: number, cls = "", rot = 0): string {
   const s = SHEETS.props?.[name];
-  if (s) return image(s, x, y, size, cls, rot);
+  if (s) return image(name, s, x, y, size, cls, rot);
   return place(cls ? `<g class="${cls}">${DRAWN[name](size)}</g>` : DRAWN[name](size), x, y, rot);
 }
 
@@ -85,6 +102,6 @@ const DECO_FALLBACK: Record<string, (s: number) => string> = {
 export function decoration(kind: string, x: number, y: number, i: number, size = 15): string {
   const key = kind === "flower" && i % 2 ? "flower2" : kind;
   const s = SHEETS.decorations?.[key];
-  const inner = s ? image(s, 0, 0, size) : (DECO_FALLBACK[key] ?? DECO_FALLBACK.pebble)(size);
+  const inner = s ? image(`d-${key}`, s, 0, 0, size) : (DECO_FALLBACK[key] ?? DECO_FALLBACK.pebble)(size);
   return `<g class="sp-deco">${place(inner, x, y)}</g>`;
 }
