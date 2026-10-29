@@ -43,7 +43,7 @@ function main(argv) {
 
   let remote;
   try {
-    remote = execFileSync("git", ["remote", "get-url", "origin"], { encoding: "utf8" });
+    remote = execFileSync("git", ["remote", "get-url", "origin"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   } catch {
     console.error("shell-pet: no git remote named 'origin' here. Run this inside a GitHub repository.");
     process.exit(1);
@@ -55,13 +55,18 @@ function main(argv) {
   }
 
   const before = existsSync(path) ? readFileSync(path, "utf8") : `# ${repo.repo}\n`;
+  const updating = before.includes(START);
   const after = insert(before, snippet(repo, square));
   if (dry) {
     process.stdout.write(after);
     return;
   }
   writeFileSync(path, after);
-  console.log(`🦀 Added a crab for ${repo.owner}/${repo.repo} to ${path}. Commit it and star your repo to feed it.`);
+  console.log(
+    updating
+      ? `🦀 Updated the crab for ${repo.owner}/${repo.repo} in ${path}.`
+      : `🦀 Added a crab for ${repo.owner}/${repo.repo} to ${path}. Commit it and star your repo to feed it.`,
+  );
 }
 
 const invoked = process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
