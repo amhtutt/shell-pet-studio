@@ -11,6 +11,7 @@
 - **Star moods use GitHub's daily star history.** GitHub no longer lets apps list stargazers, so "grateful" now means new stars today or yesterday.
 - **The website explains the mood** (for example "An open issue has had no reply for 16 days"), shows clear messages for missing or unavailable repos, and reserves space while badges load.
 - **The gallery includes small repos**, not just famous ones.
+- **Other sites can read the badge API.** The badge and preview endpoints allow cross-origin `GET` and expose the `X-Shell-Pet-*` headers.
 
 ### Fixed
 

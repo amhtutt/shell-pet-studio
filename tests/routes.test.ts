@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GET as preview } from "@/app/api/preview/route";
+import { GET as preview, OPTIONS } from "@/app/api/preview/route";
 
 const get = (q: string) => preview(new Request(`http://x/api/preview?${q}`)).text();
 
@@ -13,5 +13,18 @@ describe("preview route", () => {
   });
   it("falls back to safe names", async () => {
     expect(await get("owner=<script>&repo=x")).not.toContain("<script>");
+  });
+});
+
+describe("CORS", () => {
+  it("lets any site read the badge and its pet headers", () => {
+    const res = preview(new Request("http://x/api/preview"));
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Access-Control-Expose-Headers")).toContain("X-Shell-Pet-Reason");
+  });
+  it("answers preflight requests", () => {
+    const res = OPTIONS();
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
   });
 });

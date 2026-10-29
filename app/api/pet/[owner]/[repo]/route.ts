@@ -1,6 +1,6 @@
 // GET /api/pet/:owner/:repo.svg?layout=wide|square&theme=auto|light|dark&size=sm|md|lg
 import { RepoNotFound } from "@/lib/github";
-import { parseOptions, svgResponse } from "@/lib/options";
+import { corsPreflight, parseOptions, svgResponse } from "@/lib/options";
 import { petFromSnapshot } from "@/lib/pet";
 import { validRepoName } from "@/lib/repo";
 import { getSnapshot } from "@/lib/snapshot";
@@ -30,3 +30,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ owner: s
     return svgResponse(renderUnavailable(owner, repo, options), CACHE_ERROR, { status: "unavailable" });
   }
 }
+
+export const OPTIONS = corsPreflight;

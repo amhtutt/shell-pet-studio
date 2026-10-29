@@ -242,7 +242,7 @@ Open <http://localhost:3000>. Useful pages while developing:
 
 | Page | What it shows |
 | --- | --- |
-| `/api/pet/OWNER/REPO.svg` | The real badge, using live GitHub data. Response headers `X-Shell-Pet-Status` and `X-Shell-Pet-Reason` say what happened and why. |
+| `/api/pet/OWNER/REPO.svg` | The real badge, using live GitHub data. Response headers `X-Shell-Pet-Status`, `X-Shell-Pet-Reason` and `X-Shell-Pet-Fetched-At` say what happened and why. CORS is open, so other sites can read them with `fetch`. |
 | `/api/preview?stage=adult&mood=happy&lang=Rust` | Any combination, no GitHub needed. Also takes `seed`, `shiny=1`, `gift=1`, `contributors`, `layout`, `theme` |
 | `/dev` | Every stage, mood and shell on one page |
 

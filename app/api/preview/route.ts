@@ -1,7 +1,7 @@
 // Render any combination without GitHub, for the website and development.
 // /api/preview?stage=adult&mood=happy&lang=TypeScript&seed=42&shiny=1&contributors=5&stars=500&releases=2&gift=1
 import { MOODS, type Mood } from "@/lib/mood";
-import { parseOptions, svgResponse } from "@/lib/options";
+import { corsPreflight, parseOptions, svgResponse } from "@/lib/options";
 import { validOwner, validRepo } from "@/lib/repo";
 import { repoSeed } from "@/lib/seed";
 import { STAGES, type Stage } from "@/lib/stage";
@@ -49,3 +49,5 @@ export function GET(req: Request) {
   );
   return svgResponse(svg, "public, max-age=0, s-maxage=86400");
 }
+
+export const OPTIONS = corsPreflight;
