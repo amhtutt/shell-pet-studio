@@ -7,6 +7,7 @@ saved as a small WebP. The renderer then only has to stack images with identical
     python3 -m venv .venv && .venv/bin/pip install pillow numpy scipy
     .venv/bin/python scripts/build-art.py
 """
+import argparse
 import base64
 import io
 import json
@@ -206,7 +207,13 @@ def decoration_slots(shell_img, n=8):
     """Spread-out points on the visible shell surface, away from its dark opening and edges."""
     a = np.asarray(shell_img).astype(int)
     m = (a[..., 3] > 200) & (a[..., :3].max(-1) > 110)
-    m = shrink(m, 61)
+    m = shrink(m, 68)  # 8.5-unit clearance for a 15-unit sticker and its outline.
+    # The shell is drawn in front of the crab. Its lower-right rim overlaps the
+    # head, so shell opacity alone is not a safe place for a sticker. Keep the
+    # whole sticker left of the face, even at the renderer's largest 1.14 scale
+    # around (95, 135): 95 + (108 + 7.5 - 95) * 1.14 < 120.
+    yy, xx = np.indices(m.shape)
+    m &= (xx <= BOX[0] + 108 * UNIT) & (yy <= BOX[1] + 110 * UNIT)
     ys, xs = np.nonzero(m)
     if len(xs) == 0:
         return []
@@ -306,7 +313,21 @@ def sheets():
     return out
 
 
+def write_decoration_slots():
+    """Regenerate placement metadata without re-encoding any image assets."""
+    slots = {name: decoration_slots(shell_frame(load(f"shell-{name}"), name)) for name in FITS}
+    target = OUT.with_name("decoration-slots.json")
+    target.write_text(json.dumps(slots, indent=2) + "\n")
+    print(f"wrote {target.relative_to(ROOT)}")
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--slots-only", action="store_true", help="update decoration placement without re-encoding artwork")
+    args = parser.parse_args()
+    write_decoration_slots()
+    if args.slots_only:
+        return
     crabs, blinks, eye_box = crab_layers()
     shells, shell_meta = shell_layers()
     stages = stage_layers()

@@ -3,6 +3,7 @@ import { moodLabel, type Mood } from "@/lib/mood";
 import { growthStage, shellScale, stageLabel, type Stage } from "@/lib/stage";
 import { BODY_COLORS, type Traits } from "@/lib/traits";
 import { ART } from "./art/assets";
+import decorationSlots from "./art/decoration-slots.json";
 import { decoration, prop, resetSprites, spriteDefs } from "./props";
 import { backdrop, border, frame, WIDE } from "./scene";
 import { styles, type Theme } from "./styles";
@@ -83,12 +84,11 @@ function tintMatrix(hex: string): string {
 function shellParts(state: PetState): { back: string; front: string } {
   const name = shellName(state);
   const art = ART.shells[name];
-  const meta = ART.shellMeta[name];
   const band = art.band
     ? `<filter id="sp-band"><feColorMatrix type="matrix" values="${tintMatrix(bandColor(state))}"/></filter>` +
       img(art.band, ` filter="url(#sp-band)" style="mix-blend-mode:multiply"`)
     : "";
-  const decos = meta.slots
+  const decos = (decorationSlots[name as keyof typeof decorationSlots] ?? [])
     .slice(0, decorationCount(state.stage, state.stars, state.contributors))
     .map(([x, y], i) => decoration(state.traits.decorations[i], x, y, i))
     .join("");
