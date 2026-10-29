@@ -4,6 +4,7 @@ import { growthStage, shellScale, stageLabel, type Stage } from "@/lib/stage";
 import { BODY_COLORS, type Traits } from "@/lib/traits";
 import { ART } from "./art/assets";
 import decorationSlots from "./art/decoration-slots.json";
+import shellInteriors from "./art/shell-interiors.json";
 import { decoration, prop, resetSprites, spriteDefs } from "./props";
 import { backdrop, border, frame, WIDE } from "./scene";
 import { styles, type Theme } from "./styles";
@@ -92,7 +93,8 @@ function shellParts(state: PetState): { back: string; front: string } {
     .slice(0, decorationCount(state.stage, state.stars, state.contributors))
     .map(([x, y], i) => decoration(state.traits.decorations[i], x, y, i))
     .join("");
-  return { back: img(art.back), front: img(art.shell) + band + decos };
+  const interior = shellInteriors[name as keyof typeof shellInteriors];
+  return { back: `<path class="sp-shell-interior" d="${interior}" fill="#2B1D1A"/>`, front: img(art.shell) + band + decos };
 }
 
 /** Crab layer with an occasional blink: the closed-eye patch replaces just the eye box. */

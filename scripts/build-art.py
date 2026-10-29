@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from scipy.ndimage import distance_transform_edt, label
+from scipy.spatial import ConvexHull
 
 ROOT = Path(__file__).resolve().parent.parent
 ART = ROOT / "art"
@@ -313,6 +314,38 @@ def sheets():
     return out
 
 
+def write_shell_interiors():
+    """A solid aperture behind the crab, following each shell at every growth size.
+
+    The convex envelope closes the lower-right opening. Clipping to the opening
+    leaves conch spikes, the mug handle, and other outside details transparent.
+    """
+    paths = {}
+    for name in FITS:
+        img = shell_frame(load(f"shell-{name}"), name)
+        ys, xs = np.nonzero(alpha(img, 128))
+        points = np.stack([xs, ys], axis=1)
+        hull = points[ConvexHull(points).vertices]
+        polygon = [list(to_units(*point)) for point in hull]
+        # Sutherland-Hodgman clipping to the aperture, in shared frame units.
+        for axis, bound, keep_greater in [(0, 70, True), (1, 60, True), (1, 145, False)]:
+            clipped = []
+            previous = polygon[-1]
+            for current in polygon:
+                inside = lambda p: p[axis] >= bound if keep_greater else p[axis] <= bound
+                if inside(previous) != inside(current):
+                    t = (bound - previous[axis]) / (current[axis] - previous[axis])
+                    clipped.append([previous[j] + t * (current[j] - previous[j]) for j in range(2)])
+                if inside(current):
+                    clipped.append(current)
+                previous = current
+            polygon = clipped
+        paths[name] = "M" + "L".join(f"{x:.1f} {y:.1f}" for x, y in polygon) + "Z"
+    target = OUT.with_name("shell-interiors.json")
+    target.write_text(json.dumps(paths, indent=2) + "\n")
+    print(f"wrote {target.relative_to(ROOT)}")
+
+
 def write_decoration_slots():
     """Regenerate placement metadata without re-encoding any image assets."""
     slots = {name: decoration_slots(shell_frame(load(f"shell-{name}"), name)) for name in FITS}
@@ -323,9 +356,10 @@ def write_decoration_slots():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--slots-only", action="store_true", help="update decoration placement without re-encoding artwork")
+    parser.add_argument("--slots-only", action="store_true", help="update shell placement and interior metadata without re-encoding artwork")
     args = parser.parse_args()
     write_decoration_slots()
+    write_shell_interiors()
     if args.slots_only:
         return
     crabs, blinks, eye_box = crab_layers()
