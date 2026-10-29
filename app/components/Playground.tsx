@@ -1,47 +1,77 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { parseRepoInput } from "@/lib/repo";
 
 type Layout = "wide" | "square";
 type Theme = "light" | "dark";
+type Status = "loading" | "ok" | "missing" | "unavailable" | "error";
 
 const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shell-pet.vercel.app";
 
-function parseRepo(input: string): [string, string] | null {
-  const m = input
-    .trim()
-    .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
-    .replace(/\.git$/, "")
-    .match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/?$/);
-  return m ? [m[1], m[2]] : null;
+const STATUS_TEXT: Record<Exclude<Status, "ok">, string> = {
+  loading: "Finding your crab…",
+  missing: "We couldn't find that repository. Check the spelling, and note that private repos aren't supported.",
+  unavailable: "GitHub is busy right now, so this crab is resting. Try again in a few minutes.",
+  error: "The preview didn't load. Check your connection and try again.",
+};
+
+/** Fetch the badge ourselves so we can read why the crab looks the way it does from the response headers. */
+function useBadge(src: string) {
+  const [state, setState] = useState<{ url: string | null; status: Status; reason: string | null }>({
+    url: null,
+    status: "loading",
+    reason: null,
+  });
+  useEffect(() => {
+    let url: string | null = null;
+    const ctrl = new AbortController();
+    setState((s) => ({ ...s, status: "loading" }));
+    fetch(src, { signal: ctrl.signal })
+      .then(async (res) => {
+        url = URL.createObjectURL(await res.blob());
+        const status = (res.headers.get("X-Shell-Pet-Status") as Status | null) ?? "ok";
+        setState({ url, status, reason: res.headers.get("X-Shell-Pet-Reason") });
+      })
+      .catch((e) => {
+        if ((e as Error).name !== "AbortError") setState({ url: null, status: "error", reason: null });
+      });
+    return () => {
+      ctrl.abort();
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [src]);
+  return state;
 }
 
 export function Playground() {
   const [input, setInput] = useState("vercel/next.js");
-  const [repo, setRepo] = useState<[string, string]>(["vercel", "next.js"]);
+  const [repo, setRepo] = useState({ owner: "vercel", repo: "next.js" });
   const [layout, setLayout] = useState<Layout>("wide");
   const [theme, setTheme] = useState<Theme>("light");
-  const [copied, setCopied] = useState(false);
-  const invalid = input.trim() !== "" && !parseRepo(input);
+  const [copyMsg, setCopyMsg] = useState("");
+  const invalid = input.trim() !== "" && !parseRepoInput(input);
 
-  const [owner, name] = repo;
+  const { owner, repo: name } = repo;
   const query = layout === "square" ? "?layout=square" : "";
   const snippet = `[![shell-pet](${ORIGIN}/api/pet/${owner}/${name}.svg${query})](https://github.com/${owner}/${name})`;
-  const src = useMemo(
-    () => `/api/pet/${owner}/${name}.svg?layout=${layout}&theme=${theme}&size=lg`,
-    [owner, name, layout, theme],
-  );
+  const badge = useBadge(`/api/pet/${owner}/${name}.svg?layout=${layout}&theme=${theme}&size=lg`);
+  const [w, h] = layout === "wide" ? [640, 160] : [192, 192];
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = parseRepo(input);
+    const parsed = parseRepoInput(input);
     if (parsed) setRepo(parsed);
   }
 
   async function copy() {
-    await navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopyMsg("Copied");
+    } catch {
+      setCopyMsg("Couldn't copy. Select the text below and copy it yourself.");
+    }
+    setTimeout(() => setCopyMsg(""), 2500);
   }
 
   return (
@@ -72,34 +102,48 @@ export function Playground() {
         {invalid ? "Use owner/repo or a github.com link, like vercel/next.js." : "Public repos only. Same repo, same crab, every time."}
       </p>
 
-      <div className="mt-8 flex flex-col items-center">
+      <div className="mt-6 flex flex-col items-center">
         <div className={`rounded-3xl p-4 sm:p-6 ${theme === "dark" ? "bg-[#0d1117]" : "bg-foam"} border-[3px] border-ink`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            key={src}
-            src={src}
-            alt={`shell-pet badge for ${owner}/${name}`}
-            className={layout === "wide" ? "w-full max-w-[640px] h-auto" : "w-48 h-48"}
-          />
+          {/* Reserve the badge's size so the page doesn't jump while it loads. */}
+          <div className="relative" style={{ width: "100%", maxWidth: w, aspectRatio: `${w} / ${h}` }}>
+            {badge.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={badge.url}
+                alt={`shell-pet badge for ${owner}/${name}`}
+                width={w}
+                height={h}
+                className={`w-full h-full transition-opacity ${badge.status === "loading" ? "opacity-40" : ""}`}
+              />
+            ) : (
+              <div className="w-full h-full rounded-xl bg-wet-sand/40 animate-pulse" aria-hidden />
+            )}
+          </div>
         </div>
+        <p className="mt-3 min-h-[1.5rem] text-center text-sm" role="status" aria-live="polite">
+          {badge.status === "ok" ? (badge.reason ? `Why: ${badge.reason}` : "") : STATUS_TEXT[badge.status]}
+        </p>
 
-        <div className="mt-5 flex flex-wrap justify-center gap-3" role="group" aria-label="Preview options">
+        <div className="mt-3 flex flex-wrap justify-center gap-3" role="group" aria-label="Preview options">
           <Toggle label="Layout" value={layout} options={["wide", "square"]} onChange={setLayout} />
           <Toggle label="Preview on" value={theme} options={["light", "dark"]} onChange={setTheme} />
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border-[3px] border-ink bg-ink text-foam">
+      <div className="mt-6 rounded-2xl border-[3px] border-ink bg-ink text-foam">
         <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/15">
           <span className="text-sm opacity-80">Paste into README.md</span>
           <button onClick={copy} className="rounded-lg bg-foam/10 px-3 py-1 text-sm font-bold hover:bg-foam/20">
-            {copied ? "Copied" : "Copy snippet"}
+            Copy snippet
           </button>
         </div>
         <pre className="overflow-x-auto px-4 py-4 font-mono text-sm leading-relaxed">
           <code>{snippet}</code>
         </pre>
       </div>
+      <p className="mt-2 min-h-[1.25rem] text-sm text-right" role="status" aria-live="polite">
+        {copyMsg}
+      </p>
     </div>
   );
 }

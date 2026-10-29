@@ -243,18 +243,14 @@ def shell_layers():
 
 def stage_layers():
     """Egg art from the zip, scaled so the egg sits on the crab's ground line."""
-    out = {}
     ground = 841  # master y of the crab's feet
-    for name, target_h in (("egg", 300), ("cracking", 300)):
-        img = load(f"stage-{name}")
-        bb = img.getchannel("A").getbbox()
-        img = img.crop(bb)
-        s = target_h / img.height
-        img = img.resize((round(img.width * s), target_h), Image.LANCZOS)
-        canvas = Image.new("RGBA", (1024, 1024))
-        canvas.alpha_composite(img, (round(470 - img.width / 2), ground - target_h))
-        out[name] = {c: layer(recolor(canvas, hx)) for c, hx in BODY.items()} if name == "cracking" else layer(canvas)
-    return out
+    img = load("stage-egg")
+    img = img.crop(img.getchannel("A").getbbox())
+    s = 300 / img.height
+    img = img.resize((round(img.width * s), 300), Image.LANCZOS)
+    canvas = Image.new("RGBA", (1024, 1024))
+    canvas.alpha_composite(img, (round(470 - img.width / 2), ground - 300))
+    return {"egg": layer(canvas)}
 
 
 def trim_cell(cell):

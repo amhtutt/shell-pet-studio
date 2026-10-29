@@ -12,12 +12,22 @@ export function parseOptions(params: URLSearchParams): RenderOptions {
   };
 }
 
-export function svgResponse(svg: string, cacheControl: string): Response {
-  return new Response(svg, {
-    headers: {
-      "Content-Type": "image/svg+xml; charset=utf-8",
-      "Cache-Control": cacheControl,
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+export interface PetInfo {
+  status: "ok" | "missing" | "unavailable";
+  reason?: string;
+  fetchedAt?: string;
+}
+
+export function svgResponse(svg: string, cacheControl: string, info?: PetInfo): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "image/svg+xml; charset=utf-8",
+    "Cache-Control": cacheControl,
+    "X-Content-Type-Options": "nosniff",
+  };
+  if (info) {
+    headers["X-Shell-Pet-Status"] = info.status;
+    if (info.reason) headers["X-Shell-Pet-Reason"] = info.reason.replace(/[^\x20-\x7e]/g, "");
+    if (info.fetchedAt) headers["X-Shell-Pet-Fetched-At"] = info.fetchedAt;
+  }
+  return new Response(svg, { headers });
 }
