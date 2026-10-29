@@ -14,8 +14,7 @@ export interface ArtData {
   /** shell: the shell; back: dark fill for gaps, drawn behind the crab; band: white band to tint (generic shells). */
   shells: Record<string, { shell: Src; back: Src; band?: Src }>;
   shellMeta: Record<string, { box: number[]; slots: number[][] }>;
-  stages: { egg: Src; cracking: Record<string, Src> };
+  stages: { egg: Src };
   props?: Record<string, Sprite>;
   decorations?: Record<string, Sprite>;
 }
-

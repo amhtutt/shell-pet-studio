@@ -1,74 +1,76 @@
 # shell-pet studio
 
-Live website: https://shell-pet-studio.vercel.app
+A responsive shell-pet frontend using the shared code and artwork pinned to **amhtutt/shell-pet `0c83b914331c5c919da530e8a380a5860f734b50`**.
 
-A responsive frontend redesign of shell-pet, based on the approved “Your code. Their home.” mockup. Includes the existing shell-pet crab art, interactive previews, language shells, mood and growth demos, light/dark previews, SVG download, and Markdown copying.
+Live site: https://shell-pet-studio.vercel.app
 
-## See it immediately
+## Run and verify
 
-Open `preview.html` in a browser. It is a self-contained copy of the website. Fonts load from Google Fonts when online, with system-font fallbacks. The interactive artwork is embedded, so no image server is needed. Your browser may require the local dev server for clipboard access; when copying is blocked, the snippet is selected for manual copying.
-
-## Run locally
-
-Use Node.js 22 or newer.
+Node.js 22 or newer:
 
 ```bash
 npm ci
+npm test
 npm run dev
 ```
 
-Open http://localhost:3000. The simple development server builds at startup. Restart it after making source changes.
+Open http://localhost:3000. The development server builds at startup; restart after source edits.
 
 ```bash
-npm test
 npm run build
 ```
 
-The production site is written to `dist/`. `preview.html` is regenerated at the same time.
+Production files are written to `dist/`. `preview.html` is regenerated as a single-file preview you can open in a browser. Live badges, demos and optional Google Fonts require an internet connection. Clipboard access may need HTTPS or localhost; the UI falls back to selecting the text for manual copying.
 
-## Deploy a separate copy to Vercel
+## Live badge versus demo
 
-1. Unzip this project.
-2. Create a new GitHub repository, for example `shell-pet-studio`.
-3. Upload the **contents** of this folder to the repository root, or push with Git. Do not upload `node_modules`.
-4. In Vercel, choose **Add New → Project**, then import that repository.
-5. Use **Other** as the framework preset, `npm run build` as the build command, and `dist` as the output directory. `vercel.json` already declares these settings.
-6. Deploy. No environment variables, database, tokens, or backend are required.
+- **Your real README badge** loads `/api/pet/OWNER/REPO.svg` from https://shell-pet.vercel.app. Repository input accepts the upstream `parseRepoInput` formats, including dot-prefixed names such as `.github`.
+- The reason, status and data timestamp come from `X-Shell-Pet-Status`, `X-Shell-Pet-Reason` and `X-Shell-Pet-Fetched-At`. Requests abort when superseded and time out after 15 seconds. Missing/private repositories and temporary upstream failures have distinct messages.
+- The upstream API now serves `Access-Control-Allow-Origin: *` and exposes those three headers. Studio reads them directly. No proxy, GitHub token, local stats simulation or server API is included. If CORS or header access becomes unavailable, Studio labels activity details unavailable instead of inventing a mood or claiming the repository is missing.
+- **Explore a demo** uses the real `/api/preview` endpoint. Its stage, mood, shell, stars, contributors, releases, shiny and recent-star gift controls never change the live badge or copied Markdown.
+- **Copy Markdown** always uses the live badge URL, with the selected layout and theme. The CLI alternative is `npx shell-pet init`.
+- **Save frozen demo SVG** downloads the current preview response. It never claims to be a live badge. Its selected state is frozen, though embedded CSS animation still plays.
+- The hero alone uses the local shared renderer, with a coral illustration color. Lifecycle examples, mood examples and language shells use `/api/preview`. The seven repository gallery entries use the real live badge endpoint.
 
-The new repo is independent of `amhtutt/shell-pet`; it does not replace the current website.
+## Current behavior
 
-## What is live and what is a demo?
+| Stage | Condition |
+| --- | --- |
+| Egg | 0 stars |
+| Juvenile | 1–19 stars, already wearing a shell |
+| Adult | 20–299 stars |
+| Elder | 300+ stars |
+| Resting | Archived or 180+ days without commits; the crab naps with a nightcap. Eggs stay eggs. |
 
-- The website renders locally in the browser. Entering a repository deterministically changes its appearance; it does **not** fetch GitHub statistics or verify repository existence.
-- Stage, mood, shell, and shiny controls are illustrative. They are explicitly labeled as an interactive demo and do not change real repository activity.
-- The copied Markdown uses the **existing** live API at `https://shell-pet.vercel.app/api/pet/OWNER/REPO.svg`. Real installed pets follow that API’s rules, not the selected demo stage/mood/shell/shiny settings.
-- Layout and light/dark theme are included in the copied Markdown.
-- **Save SVG** downloads the current demo image. It is a static snapshot of the selected state, with embedded CSS animation; it does not update from GitHub.
-- Set `badgeOrigin` in `public/config.js` if you later connect your own badge service. Change `projectUrl` there to point navigation links at your new GitHub repository.
+Mood rules use the shared priority: Celebrating, Grateful, Anxious, Curious, Happy, Lonely, Sleepy, Sleeping. The website lists the actual conditions and shows the API’s reason for real badges. Other activity falls back to Happy. Personal repositories alone can be Lonely; issue volume by itself does not make a crab Anxious.
 
-## Edit the design
+Juveniles get up to three decorations, adults and elders up to eight. Stars grow shells smoothly inside each stage and major releases add size. Losing stars can move a crab back a stage. Badges refresh about hourly when viewed; there is no background job. Private and missing repositories look identical.
+
+## Deploy
+
+The repository is linked to the separate `shell-pet-studio` Vercel project. Pushes to `main` deploy automatically. The existing `shell-pet` project is separate.
+
+For another deployment, import this repository into Vercel using **Other**, build command `npm run build`, output directory `dist`. `vercel.json` declares these settings. No environment variables are required.
+
+`public/config.js` sets the public badge API origin and GitHub navigation link. If replacing the API, configure CORS on that origin for Studio and expose the three status headers. The preview endpoint must also allow cross-origin GET for snapshot downloads.
+
+## Source map
 
 | File | Purpose |
 | --- | --- |
-| `public/index.html` | Page structure, copy, navigation, controls |
-| `public/style.css` | Colors, typography, layouts, responsive styles |
-| `public/config.js` | Live badge service and project link |
-| `src/app.js` | UI interactions, galleries, clipboard and download |
-| `src/demo.js` | Repository parsing, demo state, Markdown URLs |
-| `src/svg/` | Existing layered artwork renderer |
-| `src/lib/` | Deterministic traits, stage, language, and mood helpers |
+| `public/index.html` | Structure, copy, controls, FAQ |
+| `public/style.css` | Responsive seaside design |
+| `public/config.js` | Public API and repository URLs |
+| `src/app.js` | Live metadata, demos, galleries, clipboard and download |
+| `src/demo.js` | URL construction, captions and response metadata helpers |
+| `src/lib/`, `src/svg/` | Exact pinned shared code and new sticker-sheet artwork |
+| `shared-source.json` | Upstream commit and Git blob hashes for all 14 shared files |
+| `tests/demo.test.mjs` | Integrity, thresholds, mood priority, input, URL, metadata and renderer tests |
 
-The badges are SVG documents containing embedded WebP art layers. They are not path-only vector drawings.
+The copied `lib/pet.ts` retains its upstream type-only reference to `RepoSnapshot`. The server implementation is intentionally absent; esbuild removes the type-only import. `lib/github.ts`, `lib/snapshot.ts` and `lib/options.ts` are not copied.
 
-## Design choices
+Artwork is SVG markup containing embedded WebP layers, not path-only vector art.
 
-- Cream, coral, sand, and pale blue, with rounded editorial headings.
-- Original shell-pet artwork instead of independently redrawn characters.
-- An early preview/copy workspace, with clickable lifecycle and shell examples.
-- Mobile layouts, visible keyboard focus, semantic labels, clipboard fallback, and reduced-motion support.
-- Extra top clearance for large shells and jumping moods.
-- No analytics, accounts, live GitHub requests, or server implementation.
+## License
 
-## Credits and license
-
-MIT © Aung Htut. Crab artwork and rendering helpers originate from [amhtutt/shell-pet](https://github.com/amhtutt/shell-pet), commit `9da85ee786e2e2f4f0e50c93bcdb30a5fe21a80c`. The redesign adds a static browser UI and adjusts preview framing and resting-state copy. See `LICENSE` and `NOTICE.md`.
+MIT © Aung Htut. Shared artwork and renderer: https://github.com/amhtutt/shell-pet at the pinned commit above. See `LICENSE`, `NOTICE.md` and `shared-source.json`.

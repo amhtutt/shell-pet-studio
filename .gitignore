@@ -3,3 +3,6 @@ dist/
 .vercel/
 .DS_Store
 .env*.local
+
+# Generated single-file preview
+preview.html

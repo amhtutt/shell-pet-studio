@@ -42,4 +42,3 @@ export function gearPath(r: number, teeth = 8): string {
 export const g = (attrs: string, inner: string) => `<g ${attrs}>${inner}</g>`;
 export const tr = (x: number, y: number, s = 1, rot = 0) =>
   `transform="translate(${r1(x)} ${r1(y)})${rot ? ` rotate(${rot})` : ""}${s !== 1 ? ` scale(${+s.toFixed(3)})` : ""}"`;
-

@@ -100,4 +100,3 @@ export function linguistColor(language: string | null | undefined): string | nul
   if (!language) return null;
   return LINGUIST_COLORS[language.toLowerCase()] ?? null;
 }
-

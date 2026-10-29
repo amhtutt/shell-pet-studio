@@ -58,4 +58,3 @@ export function traitsFromSeed(seed: number): Traits {
   };
 }
 
-

@@ -38,4 +38,3 @@ export function styles(theme: Theme): string {
         : `${vars(LIGHT)}@media (prefers-color-scheme:dark){${vars(DARK)}}`;
   return `<style>${colors}${KEYFRAMES.replace(/\n/g, "")}</style>`;
 }
-

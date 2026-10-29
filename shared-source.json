@@ -1,0 +1,20 @@
+{
+  "repository": "amhtutt/shell-pet",
+  "commit": "0c83b914331c5c919da530e8a380a5860f734b50",
+  "files": {
+    "src/lib/stage.ts": "50690a0801d474d9f811a5c10bf6a4813edd9989",
+    "src/lib/mood.ts": "033635e51f8ee7c10dddbec1cec985194cecdba1",
+    "src/lib/pet.ts": "e4fb483d40d936a9e3e907c9ffea0f6832de125d",
+    "src/lib/traits.ts": "3c02744a1c148901502771dc7c677c171d97f7fb",
+    "src/lib/seed.ts": "be20739123d9cb2f438528b52cb11fe1ed1e1fb0",
+    "src/lib/languages.ts": "10c7c1931d11a3c7906000f35a253669c5fb811a",
+    "src/lib/repo.ts": "3b979246f6518226a9eb0bb355427104f2679bbd",
+    "src/svg/render.ts": "78e239c68c4833a2b6f0d776ffd0641a54637cb9",
+    "src/svg/props.ts": "d76ab20dea443641319222f76ec609b586179230",
+    "src/svg/styles.ts": "fd2734a19705ecb010d4d91115d39431fd875f2d",
+    "src/svg/scene.ts": "c2593314801982ca9ac923f165dcc7a77301e03a",
+    "src/svg/util.ts": "8048e5c39a30db26a7dd36c8ba1e6361d56856c5",
+    "src/svg/art/types.ts": "335385d1fc6090b8905daf4888a4cee9f90fed8b",
+    "src/svg/art/assets.ts": "e62821f5241da56f08f4b9649c2155fbc4138425"
+  }
+}

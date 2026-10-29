@@ -1,31 +1,49 @@
 import type { PetState } from "@/svg/render";
-import type { RepoStats } from "./github";
-import { daysSince, moodFor } from "./mood";
+import type { RepoSnapshot } from "./github";
+import { daysSince, moodWithReason, type Activity } from "./mood";
 import { repoSeed } from "./seed";
 import { stageFor } from "./stage";
 import { traitsFromSeed } from "./traits";
 
-/** Pure: GitHub stats → everything the renderer needs. */
-export function petFromStats(stats: RepoStats): PetState {
-  const a = stats.activity;
-  const daysSinceCommit = a.lastCommitAt ? daysSince(a.now, a.lastCommitAt) : null;
+const date = (s: string | null) => (s ? new Date(s) : null);
+
+export function activityFrom(s: RepoSnapshot, now: Date): Activity {
   return {
-    owner: stats.owner,
-    repo: stats.repo,
-    traits: traitsFromSeed(repoSeed(stats.owner, stats.repo)),
-    stage: stageFor({ stars: stats.stars, archived: stats.archived, daysSinceCommit }),
-    mood: moodFor(a),
-    language: stats.language,
-    stars: stats.stars,
-    contributors: stats.contributors,
-    majorReleases: stats.majorReleases,
-    recentStar: daysSince(a.now, a.lastStarAt) < 3,
+    now,
+    lastCommitAt: date(s.lastCommitAt),
+    lastReleaseAt: date(s.lastReleaseAt),
+    // Counted over the day before the fetch; once the snapshot is a day old it no longer counts.
+    mergedLastDay: daysSince(now, new Date(s.fetchedAt)) < 1 ? s.mergedLastDay : 0,
+    lastStarDayAt: date(s.lastStarDayAt),
+    starsLast60d: s.starsLast60d,
+    lastForkAt: date(s.lastForkAt),
+    lastFirstTimeContributorAt: date(s.lastFirstTimeContributorAt),
+    outsideLast60d: s.outsideLast60d,
+    ownerIsUser: s.ownerIsUser,
+    oldestUnansweredIssueAt: date(s.oldestUnansweredIssueAt),
   };
 }
 
-const NAME = /^[A-Za-z0-9_.-]{1,100}$/;
-
-export function validRepoName(owner: string, repo: string): boolean {
-  return NAME.test(owner) && NAME.test(repo) && owner.length <= 39 && !repo.startsWith(".");
+/** Pure: a cached snapshot + the current time → everything the renderer needs, plus why. */
+export function petFromSnapshot(s: RepoSnapshot, now = new Date()): { pet: PetState; reason: string } {
+  const a = activityFrom(s, now);
+  const daysSinceCommit = a.lastCommitAt ? daysSince(now, a.lastCommitAt) : null;
+  const stage = stageFor({ stars: s.stars, archived: s.archived, daysSinceCommit });
+  const { mood, reason } = moodWithReason(a);
+  return {
+    pet: {
+      owner: s.owner,
+      repo: s.repo,
+      traits: traitsFromSeed(repoSeed(s.owner, s.repo)),
+      stage,
+      mood,
+      language: s.language,
+      stars: s.stars,
+      contributors: s.contributors,
+      majorReleases: s.majorReleases,
+      // Star history comes in day buckets; "within ~3 days" means the last three buckets.
+      recentStar: daysSince(now, a.lastStarDayAt) < 3,
+    },
+    reason: stage === "resting" ? (s.archived ? "The repo is archived, so the crab is resting." : "No commits for 180+ days, so the crab is resting.") : reason,
+  };
 }
-

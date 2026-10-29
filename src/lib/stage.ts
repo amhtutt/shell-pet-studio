@@ -1,7 +1,7 @@
-export const STAGES = ["egg", "cracking", "hatchling", "juvenile", "adult", "elder", "abandoned"] as const;
+export const STAGES = ["egg", "juvenile", "adult", "elder", "resting"] as const;
 export type Stage = (typeof STAGES)[number];
 
-export const ABANDONED_AFTER_DAYS = 180;
+export const RESTING_AFTER_DAYS = 180;
 
 export interface StageInput {
   stars: number;
@@ -10,21 +10,26 @@ export interface StageInput {
   daysSinceCommit: number | null;
 }
 
-export function stageFor({ stars, archived, daysSinceCommit }: StageInput): Stage {
-  if (archived || (daysSinceCommit !== null && daysSinceCommit >= ABANDONED_AFTER_DAYS)) return "abandoned";
+/** Size stage from stars alone; also decides how big a resting crab's shell is. */
+export function growthStage(stars: number): Exclude<Stage, "resting"> {
   if (stars <= 0) return "egg";
-  if (stars < 5) return "cracking";
-  if (stars < 25) return "hatchling";
-  if (stars < 200) return "juvenile";
-  if (stars < 1000) return "adult";
+  if (stars < 20) return "juvenile";
+  if (stars < 300) return "adult";
   return "elder";
 }
 
+/** Archived or long-quiet repos rest. Finished projects aren't punished: the crab just naps. */
+export function stageFor({ stars, archived, daysSinceCommit }: StageInput): Stage {
+  const growth = growthStage(stars);
+  if (growth !== "egg" && (archived || (daysSinceCommit !== null && daysSinceCommit >= RESTING_AFTER_DAYS))) return "resting";
+  return growth;
+}
+
 // [min stars, max stars, min scale, max scale] per shelled stage.
-const SHELL_RANGES: Partial<Record<Stage, [number, number, number, number]>> = {
-  juvenile: [25, 200, 0.66, 0.78],
-  adult: [200, 1000, 0.9, 1.0],
-  elder: [1000, 100000, 1.04, 1.12],
+const SHELL_RANGES: Record<"juvenile" | "adult" | "elder", [number, number, number, number]> = {
+  juvenile: [1, 20, 0.7, 0.84],
+  adult: [20, 300, 0.9, 1.0],
+  elder: [300, 100000, 1.04, 1.12],
 };
 
 /**
@@ -32,16 +37,14 @@ const SHELL_RANGES: Partial<Record<Stage, [number, number, number, number]>> = {
  * Each distinct major release adds a little extra growth.
  */
 export function shellScale(stage: Stage, stars: number, majorReleases = 0): number {
-  const range = SHELL_RANGES[stage === "abandoned" ? stageFor({ stars, archived: false, daysSinceCommit: 0 }) : stage];
-  if (!range) return stage === "abandoned" ? 0.9 : 0;
-  const [lo, hi, sLo, sHi] = range;
+  const growth = stage === "resting" ? growthStage(stars) : stage;
+  if (growth === "egg") return 0;
+  const [lo, hi, sLo, sHi] = SHELL_RANGES[growth];
   const t = Math.min(1, Math.max(0, (Math.log(Math.max(stars, lo)) - Math.log(lo)) / (Math.log(hi) - Math.log(lo))));
   const releaseBonus = Math.min(majorReleases, 5) * 0.012;
   return +(sLo + (sHi - sLo) * t + releaseBonus).toFixed(3);
 }
 
 export function stageLabel(stage: Stage): string {
-  if (stage === "abandoned") return "Resting";
   return stage[0].toUpperCase() + stage.slice(1);
 }
-
