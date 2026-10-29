@@ -1,0 +1,11 @@
+name: Idea
+description: Suggest a mood, a shell, or a change to how the crab behaves.
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What should change, and why would it make the crab more fun or more accurate?
+    validations:
+      required: true

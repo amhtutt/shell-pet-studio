@@ -1,0 +1,24 @@
+name: Import shell-pet history once
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/import-shell-pet-history.yml]
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Retain upstream ancestry and remove this one-time workflow
+        run: |
+          git fetch https://github.com/amhtutt/shell-pet.git main
+          test "$(git rev-parse FETCH_HEAD)" = 40965ad052356218ecb1edc4db679ca3c2598780
+          git config user.name 'amhtutt'
+          git config user.email '297792457+amhtutt@users.noreply.github.com'
+          git merge --allow-unrelated-histories --no-commit --no-ff -s ours 40965ad052356218ecb1edc4db679ca3c2598780
+          git rm .github/workflows/import-shell-pet-history.yml
+          git commit -m 'Retain shell-pet history through 40965ad in the unified Studio repository'
+          git push origin HEAD:main

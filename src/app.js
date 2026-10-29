@@ -1,10 +1,13 @@
-import { render } from './svg/render';
-import { growthStage } from './lib/stage';
-import { MOODS } from './lib/mood';
+import { render } from '../svg/render';
+import { growthStage } from '../lib/stage';
+import { MOODS } from '../lib/mood';
 import { DEFAULT_REPO, demoPet, markdownFor, parseRepository, STARS, MOOD_RULES, badgeURL, previewURL, badgeMetadata, statusMessage } from './demo';
-const $ = s => document.querySelector(s);
-const config = window.SHELL_PET_CONFIG || {};
-const origin = config.badgeOrigin || 'https://shell-pet.vercel.app';
+
+export function initializeStudio(root, config = {}) {
+const $ = s => root.querySelector(s);
+
+const apiOrigin = config.apiOrigin ?? '';
+const markdownOrigin = config.badgeOrigin || 'https://shell-pet.vercel.app';
 let repository = { ...DEFAULT_REPO };
 const options = { layout: 'wide', theme: 'light', size: 'lg' };
 const settings = { stage: 'adult', mood: 'happy', language: null, stars: STARS.adult, contributors: 3, releases: 1, shiny: false, gift: false };
@@ -22,7 +25,7 @@ async function loadLiveBadge() {
   const version = ++liveVersion;
   const timeout = setTimeout(() => controller.abort(), 15000);
   const image = $('#badge-preview');
-  const url = badgeURL(repository, options, origin);
+  const url = badgeURL(repository, options, apiOrigin);
   $('#live-reason').textContent = 'Checking the live repository badge…';
   $('#live-status').dataset.status = 'loading'; $('#live-fetched').textContent = ''; $('#live-retry').hidden = true;
   image.alt = `Live shell-pet badge for ${repository.owner}/${repository.repo}`;
@@ -51,7 +54,7 @@ async function loadLiveBadge() {
   } finally { clearTimeout(timeout); }
 }
 function updateDemo() {
-  $('#demo-preview').src = previewURL(repository, settings, options, origin);
+  $('#demo-preview').src = previewURL(repository, settings, options, apiOrigin);
   $('#demo-preview').alt = `Demo snapshot for ${repository.owner}/${repository.repo}: ${title(settings.stage)}, ${title(settings.mood)}${settings.language ? `, ${settings.language} shell` : ''}`;
   $('#demo-caption').textContent = settings.stage === 'resting' ? 'Resting: archived, or no commits for 180+ days. The crab naps with a nightcap; eggs stay eggs.' : `${title(settings.mood)}: ${MOOD_RULES[settings.mood]}`;
   $('#demo-stage').classList.toggle('dark', options.theme === 'dark'); $('#demo-stage').classList.toggle('square', options.layout === 'square');
@@ -61,10 +64,10 @@ function updateDemo() {
   $('#shiny-button').innerHTML = `<span aria-hidden="true">✦</span> ${settings.shiny ? 'Shiny on' : 'Try shiny'}`;
 }
 function updateDisplay() {
-  $('#markdown-code').textContent = markdownFor(repository, options.layout, options.theme, origin);
+  $('#markdown-code').textContent = markdownFor(repository, options.layout, options.theme, markdownOrigin);
   $('#badge-stage').classList.toggle('dark', options.theme === 'dark'); $('#badge-stage').classList.toggle('square', options.layout === 'square');
   $('#badge-preview').width = options.layout === 'wide' ? 640 : 240; $('#badge-preview').height = options.layout === 'wide' ? 160 : 240;
-  for (const key of ['layout', 'theme']) document.querySelectorAll(`[data-${key}]`).forEach(button => {
+  for (const key of ['layout', 'theme']) root.querySelectorAll(`[data-${key}]`).forEach(button => {
     const active = button.dataset[key] === options[key]; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
   });
   updateDemo(); loadLiveBadge();
@@ -80,7 +83,7 @@ $('#repo-form').addEventListener('submit', event => {
 });
 $('#repo-input').addEventListener('input', () => { $('#repo-error').hidden = true; $('#repo-input').removeAttribute('aria-invalid'); });
 $('#live-retry').addEventListener('click', loadLiveBadge);
-for (const key of ['layout', 'theme']) document.querySelectorAll(`[data-${key}]`).forEach(button => button.addEventListener('click', () => { options[key] = button.dataset[key]; updateDisplay(); }));
+for (const key of ['layout', 'theme']) root.querySelectorAll(`[data-${key}]`).forEach(button => button.addEventListener('click', () => { options[key] = button.dataset[key]; updateDisplay(); }));
 $('#stage-select').addEventListener('change', e => { settings.stage = e.target.value; settings.stars = STARS[settings.stage]; updateDemo(); });
 $('#mood-select').addEventListener('change', e => { settings.mood = e.target.value; updateDemo(); });
 $('#shell-select').addEventListener('change', e => { settings.language = e.target.value || null; updateDemo(); });
@@ -98,12 +101,12 @@ async function copy(text, code, label) {
     code.parentElement.focus(); toast('Clipboard unavailable. Text is selected — press ⌘C or Ctrl+C.');
   }
 }
-$('#copy-button').addEventListener('click', () => copy(markdownFor(repository, options.layout, options.theme, origin), $('#markdown-code'), 'Markdown'));
+$('#copy-button').addEventListener('click', () => copy(markdownFor(repository, options.layout, options.theme, markdownOrigin), $('#markdown-code'), 'Markdown'));
 $('#copy-cli').addEventListener('click', () => copy('npx shell-pet init', $('#cli-command'), 'CLI command'));
 $('#download-button').addEventListener('click', async () => {
   const button = $('#download-button'); const snapshot = { repository: { ...repository }, settings: { ...settings }, options: { ...options } }; button.disabled = true;
   try {
-    const url = previewURL(snapshot.repository, snapshot.settings, snapshot.options, origin);
+    const url = previewURL(snapshot.repository, snapshot.settings, snapshot.options, apiOrigin);
     const response = await fetch(url, { credentials: 'omit', signal: AbortSignal.timeout(15000) });
     if (!response.ok || !response.headers.get('content-type')?.includes('image/svg+xml')) throw new Error('SVG unavailable');
     const objectURL = URL.createObjectURL(await response.blob()); const a = document.createElement('a'); a.href = objectURL;
@@ -123,12 +126,12 @@ const growth = [
 growth.forEach(([stage, threshold, description], i) => {
   const button = document.createElement('button'); button.type = 'button'; button.className = 'growth-card'; button.setAttribute('aria-label', `Preview the ${title(stage)} stage`);
   button.innerHTML = `<span class="stage-number">0${i + 1}</span><img width="240" height="192" loading="lazy" alt="${title(stage)} stage example" /><h3>${title(stage)}</h3><span class="stage-threshold">${threshold}</span><p>${description}</p>`;
-  button.querySelector('img').src = previewURL(DEFAULT_REPO, { stage, stars: STARS[stage], contributors: stage === 'elder' ? 8 : stage === 'adult' ? 3 : 0 }, { layout: 'square', size: 'lg' }, origin);
+  button.querySelector('img').src = previewURL(DEFAULT_REPO, { stage, stars: STARS[stage], contributors: stage === 'elder' ? 8 : stage === 'adult' ? 3 : 0 }, { layout: 'square', size: 'lg' }, apiOrigin);
   button.addEventListener('click', () => { settings.stage = stage; settings.stars = STARS[stage]; updateDemo(); scrollTo('#demo'); }); $('#growth-grid').append(button);
 });
 function selectMood(mood, clicked = false) {
   $('#mood-pills').querySelectorAll('button').forEach(button => { const active = button.dataset.mood === mood; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active)); });
-  $('#mood-crab').src = previewURL(DEFAULT_REPO, { stage: 'adult', mood, contributors: 0 }, { layout: 'square', size: 'lg' }, origin);
+  $('#mood-crab').src = previewURL(DEFAULT_REPO, { stage: 'adult', mood, contributors: 0 }, { layout: 'square', size: 'lg' }, apiOrigin);
   $('#mood-crab').alt = `${title(mood)} hermit crab example`; $('#mood-caption').textContent = MOOD_RULES[mood];
   if (clicked) { settings.mood = mood; updateDemo(); }
 }
@@ -142,16 +145,18 @@ selectMood('happy');
 for (const [language, description] of [['TypeScript', 'Blue spiral, white stripe.'], ['Python', 'Blue and yellow coils.'], ['Rust', 'Rivets and a little iron.'], ['Go', 'A smooth cyan spiral.'], ['Ruby', 'A deep red gemstone.'], ['Shell', 'A tiny terminal home.']]) {
   const button = document.createElement('button'); button.type = 'button'; button.className = 'shell-card'; button.setAttribute('aria-label', `Try the ${language} shell in the demo`);
   button.innerHTML = `<span class="choose-arrow" aria-hidden="true">↗</span><img width="180" height="145" loading="lazy" alt="${language} shell example" /><h3>${language}</h3><p>${description}</p>`;
-  button.querySelector('img').src = previewURL(DEFAULT_REPO, { stage: 'adult', language, contributors: 0 }, { layout: 'square', size: 'lg' }, origin);
+  button.querySelector('img').src = previewURL(DEFAULT_REPO, { stage: 'adult', language, contributors: 0 }, { layout: 'square', size: 'lg' }, apiOrigin);
   button.addEventListener('click', () => { settings.language = language; if (settings.stage === 'egg') { settings.stage = 'juvenile'; settings.stars = STARS.juvenile; } updateDemo(); scrollTo('#demo'); }); $('#shell-grid').append(button);
 }
 $('#try-classic').addEventListener('click', () => { settings.language = null; updateDemo(); });
 $('#explore-stages').addEventListener('click', () => $('#stage-select').focus({ preventScroll: true }));
-for (const repo of ['amhtutt/shell-pet', 'chalk/ansi-regex', 'sindresorhus/tempy', 'microsoft/vscode-diagnostic-tools', 'facebook/react', 'vercel/next.js', 'torvalds/linux']) {
+for (const repo of ['amhtutt/shell-pet-studio', 'chalk/ansi-regex', 'sindresorhus/tempy', 'microsoft/vscode-diagnostic-tools', 'facebook/react', 'vercel/next.js', 'torvalds/linux']) {
   const parsed = parseRepository(repo); const item = document.createElement('article'); item.className = 'gallery-card';
   const link = document.createElement('a'); link.href = `https://github.com/${repo}`; link.target = '_blank'; link.rel = 'noopener noreferrer';
-  const image = document.createElement('img'); image.width = 640; image.height = 160; image.loading = 'lazy'; image.alt = `Live shell-pet badge for ${repo}`; image.src = badgeURL(parsed, { layout: 'wide', theme: 'light' }, origin);
+  const image = document.createElement('img'); image.width = 640; image.height = 160; image.loading = 'lazy'; image.alt = `Live shell-pet badge for ${repo}`; image.src = badgeURL(parsed, { layout: 'wide', theme: 'light' }, apiOrigin);
   const name = document.createElement('span'); name.textContent = repo + ' ↗'; link.append(image, name); item.append(link); $('#repo-gallery').append(item);
 }
-if (config.projectUrl) document.querySelectorAll('.github-link').forEach(a => { a.href = config.projectUrl; });
+if (config.projectUrl) root.querySelectorAll('.github-link').forEach(a => { a.href = config.projectUrl; });
 updateDisplay();
+return () => { liveController?.abort(); liveVersion++; clearTimeout(toastTimer); };
+}

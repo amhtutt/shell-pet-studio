@@ -1,0 +1,15 @@
+{
+  "name": "shell-pet",
+  "version": "1.1.0",
+  "description": "Add a shell-pet hermit crab badge to your README.",
+  "keywords": ["readme", "badge", "github", "svg", "pet", "cli"],
+  "homepage": "https://shell-pet.vercel.app",
+  "bugs": "https://github.com/amhtutt/shell-pet-studio/issues",
+  "repository": { "type": "git", "url": "git+https://github.com/amhtutt/shell-pet-studio.git", "directory": "cli" },
+  "author": "Aung Htut",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "shell-pet": "index.mjs" },
+  "files": ["index.mjs", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,24 @@
+name: Something looks wrong
+description: The crab has the wrong mood or stage, looks broken, or the badge doesn't load.
+labels: [bug]
+body:
+  - type: input
+    id: repo
+    attributes:
+      label: Repository
+      description: The owner/repo whose badge looks wrong.
+      placeholder: vercel/next.js
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What you expected, and what you saw
+      description: "The website shows why the crab feels the way it does (\"Why: …\"). Include that line if you have it."
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Badge URL
+      placeholder: https://shell-pet.vercel.app/api/pet/OWNER/REPO.svg?layout=square

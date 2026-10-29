@@ -1,7 +1,7 @@
-import { parseRepoInput } from './lib/repo';
-import { repoSeed } from './lib/seed';
-import { traitsFromSeed } from './lib/traits';
-export const DEFAULT_REPO = { owner: 'amhtutt', repo: 'shell-pet' };
+import { parseRepoInput } from '../lib/repo';
+import { repoSeed } from '../lib/seed';
+import { traitsFromSeed } from '../lib/traits';
+export const DEFAULT_REPO = { owner: 'amhtutt', repo: 'shell-pet-studio' };
 export const STARS = { egg: 0, juvenile: 8, adult: 80, elder: 2000, resting: 80 };
 export const parseRepository = parseRepoInput;
 export const MOOD_RULES = {
@@ -28,7 +28,7 @@ const integer = (value, fallback, max) => {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? Math.min(max, Math.floor(n)) : fallback;
 };
-export function previewURL(repository, settings = {}, options = {}, origin = 'https://shell-pet.vercel.app') {
+export function previewURL(repository, settings = {}, options = {}, origin = '') {
   const stage = Object.hasOwn(STARS, settings.stage) ? settings.stage : 'adult';
   const mood = Object.hasOwn(MOOD_RULES, settings.mood) ? settings.mood : 'happy';
   const q = new URLSearchParams({ stage, mood, owner: repository.owner, repo: repository.repo, lang: settings.language || '', stars: String(integer(settings.stars ?? STARS[stage], STARS[stage], 10_000_000)), contributors: String(integer(settings.contributors ?? 3, 3, 100_000)), releases: String(integer(settings.releases ?? 1, 1, 1000)), layout: options.layout === 'wide' ? 'wide' : 'square', theme: options.theme === 'dark' ? 'dark' : 'light' });

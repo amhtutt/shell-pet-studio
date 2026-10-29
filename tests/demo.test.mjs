@@ -3,28 +3,17 @@ import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 async function load(entry) {
-  const r = await build({ entryPoints: [entry], bundle: true, write: false, platform: 'node', format: 'esm', alias: { '@': resolve('src') } });
+  const r = await build({ entryPoints: [entry], bundle: true, write: false, platform: 'node', format: 'esm', alias: { '@': resolve('.') } });
   return import('data:text/javascript;base64,' + Buffer.from(r.outputFiles[0].text).toString('base64'));
 }
 const { parseRepository, demoPet, markdownFor, DEFAULT_REPO, badgeURL, previewURL, badgeMetadata, statusMessage, MOOD_RULES } = await load('src/demo.js');
-const { stageFor, growthStage, shellScale, STAGES } = await load('src/lib/stage.ts');
-const { moodFor, moodWithReason, MOODS } = await load('src/lib/mood.ts');
-const { render } = await load('src/svg/render.ts');
+const { stageFor, growthStage, shellScale, STAGES } = await load('lib/stage.ts');
+const { moodFor, moodWithReason, MOODS } = await load('lib/mood.ts');
+const { render } = await load('svg/render.ts');
 
-test('all 14 shared files match the pinned GitHub blob hashes exactly', async () => {
-  const manifest = JSON.parse(await readFile('shared-source.json', 'utf8'));
-  assert.equal(manifest.commit, '0c83b914331c5c919da530e8a380a5860f734b50');
-  assert.equal(Object.keys(manifest.files).length, 14);
-  for (const [file, sha] of Object.entries(manifest.files)) {
-    const bytes = await readFile(file);
-    const hash = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
-    assert.equal(hash, sha, file);
-  }
-});
 test('repo inputs use the upstream parser, including .github, URLs and clone URLs', () => {
-  for (const input of ['amhtutt/shell-pet', ' https://github.com/amhtutt/shell-pet/ ', 'https://www.github.com/amhtutt/shell-pet.git', 'https://github.com/amhtutt/shell-pet?tab=readme-ov-file', 'git@github.com:amhtutt/shell-pet.git']) assert.deepEqual(parseRepository(input), DEFAULT_REPO);
+  for (const input of ['amhtutt/shell-pet-studio', ' https://github.com/amhtutt/shell-pet-studio/ ', 'https://www.github.com/amhtutt/shell-pet-studio.git', 'https://github.com/amhtutt/shell-pet-studio?tab=readme-ov-file', 'git@github.com:amhtutt/shell-pet-studio.git']) assert.deepEqual(parseRepository(input), DEFAULT_REPO);
   assert.deepEqual(parseRepository('amhtutt/.github'), { owner: 'amhtutt', repo: '.github' });
   assert.ok(parseRepository('a'.repeat(39) + '/x'));
   for (const input of ['', 'https://notgithub.com/a/b', 'https://github.com.evil.test/a/b', 'https://user:secret@github.com/a/b', 'https://github.com:9999/a/b', '<script>/x', 'a/..', 'a/.', 'a/b?x', 'a--b/c', '-a/b', 'a-/b', 'a_b/c', 'a'.repeat(40) + '/b', 'a/' + 'b'.repeat(101)]) assert.equal(parseRepository(input), null, input);
@@ -89,16 +78,16 @@ test('sleep boundaries and the 7–29 day fallback are explicit', () => {
 });
 test('Markdown uses the live API with layout/theme, never demo overrides', () => {
   const s=markdownFor(DEFAULT_REPO,'square','dark','https://example.com/');
-  assert.ok(s.includes('https://example.com/api/pet/amhtutt/shell-pet.svg?layout=square&theme=dark'));
-  assert.ok(s.endsWith('(https://github.com/amhtutt/shell-pet)'));
+  assert.ok(s.includes('https://example.com/api/pet/amhtutt/shell-pet-studio.svg?layout=square&theme=dark'));
+  assert.ok(s.endsWith('(https://github.com/amhtutt/shell-pet-studio)'));
   assert.ok(!/stage=|mood=|lang=|shiny=|gift=/.test(s));
   assert.ok(badgeURL({owner:'a',repo:'.github'},{layout:'wide',theme:'light'}).includes('/a/.github.svg?layout=wide&theme=light'));
 });
 test('preview URL encodes all selected values, including C++, stars, props and both flags', () => {
-  const u=new URL(previewURL(DEFAULT_REPO,{stage:'elder',mood:'grateful',language:'C++',stars:400,contributors:8,releases:2,shiny:true,gift:true},{layout:'wide',theme:'dark'}));
+  const u=new URL(previewURL(DEFAULT_REPO,{stage:'elder',mood:'grateful',language:'C++',stars:400,contributors:8,releases:2,shiny:true,gift:true},{layout:'wide',theme:'dark'},'https://shell-pet-studio.vercel.app'));
   assert.equal(u.pathname,'/api/preview');
-  assert.deepEqual(Object.fromEntries(u.searchParams),{stage:'elder',mood:'grateful',owner:'amhtutt',repo:'shell-pet',lang:'C++',stars:'400',contributors:'8',releases:'2',layout:'wide',theme:'dark',shiny:'1',gift:'1'});
-  const off=new URL(previewURL(DEFAULT_REPO,{stars:NaN,contributors:-2,releases:Infinity}));
+  assert.deepEqual(Object.fromEntries(u.searchParams),{stage:'elder',mood:'grateful',owner:'amhtutt',repo:'shell-pet-studio',lang:'C++',stars:'400',contributors:'8',releases:'2',layout:'wide',theme:'dark',shiny:'1',gift:'1'});
+  const off=new URL(previewURL(DEFAULT_REPO,{stars:NaN,contributors:-2,releases:Infinity}), 'https://shell-pet-studio.vercel.app');
   assert.equal(off.searchParams.get('stars'),'80'); assert.equal(off.searchParams.get('contributors'),'3'); assert.equal(off.searchParams.get('releases'),'1');
   assert.equal(off.searchParams.has('shiny'),false); assert.equal(off.searchParams.has('gift'),false);
 });
@@ -120,10 +109,26 @@ test('all current stage/mood/shell/theme combinations render self-contained SVG'
   }
 });
 test('UI separates real/demo, exposes five stages, native FAQ, CLI and frozen download', async () => {
-  const html=await readFile('public/index.html','utf8'); const app=await readFile('src/app.js','utf8');
+  const html=JSON.parse((await readFile('src/studio-markup.ts','utf8')).replace(/^export const studioMarkup = /,'').replace(/;\s*$/,'')); const app=await readFile('src/app.js','utf8');
   assert.ok(html.includes('id="badge-preview"')); assert.ok(html.includes('id="demo-preview"'));
   assert.ok(!/value="(?:cracking|hatchling|abandoned)"/.test(html));
   assert.ok(html.includes('npx shell-pet init')); assert.ok(html.includes('Save frozen demo SVG'));
   assert.equal((html.match(/<details>/g)||[]).length,7);
-  for(const repo of ['amhtutt/shell-pet','chalk/ansi-regex','sindresorhus/tempy','microsoft/vscode-diagnostic-tools','facebook/react','vercel/next.js','torvalds/linux']) assert.ok(app.includes(repo));
+  for(const repo of ['amhtutt/shell-pet-studio','chalk/ansi-regex','sindresorhus/tempy','microsoft/vscode-diagnostic-tools','facebook/react','vercel/next.js','torvalds/linux']) assert.ok(app.includes(repo));
+});
+
+
+test('same-origin live and preview requests keep canonical public Markdown URLs', async () => {
+  assert.ok(badgeURL(DEFAULT_REPO, {layout:'wide',theme:'light'}, '').startsWith('/api/pet/amhtutt/shell-pet-studio.svg?'));
+  assert.ok(previewURL(DEFAULT_REPO).startsWith('/api/preview?'));
+  assert.ok(markdownFor(DEFAULT_REPO,'wide','light').includes('https://shell-pet.vercel.app/api/pet/amhtutt/shell-pet-studio.svg'));
+  const {existsSync}=await import('node:fs');
+  assert.equal(existsSync('src/lib/github.ts'),false);
+  assert.equal(existsSync('src/lib/options.ts'),false);
+  assert.equal(existsSync('src/lib'),false);
+  assert.equal(existsSync('src/svg'),false);
+  const config=JSON.parse(await readFile('vercel.json','utf8'));
+  assert.equal(Object.hasOwn(config,'outputDirectory'),false);
+  assert.equal(Object.hasOwn(config,'framework'),false);
+  assert.equal(config.headers[0].headers.length,2);
 });
