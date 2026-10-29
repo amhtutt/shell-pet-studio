@@ -22,9 +22,9 @@ export function stageFor({ stars, archived, daysSinceCommit }: StageInput): Stag
 
 // [min stars, max stars, min scale, max scale] per shelled stage.
 const SHELL_RANGES: Partial<Record<Stage, [number, number, number, number]>> = {
-  juvenile: [25, 200, 0.68, 0.8],
-  adult: [200, 1000, 0.86, 0.96],
-  elder: [1000, 100000, 1.0, 1.12],
+  juvenile: [25, 200, 0.66, 0.78],
+  adult: [200, 1000, 0.9, 1.0],
+  elder: [1000, 100000, 1.04, 1.12],
 };
 
 /**

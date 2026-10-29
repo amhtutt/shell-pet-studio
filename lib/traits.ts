@@ -1,5 +1,6 @@
 import { createRng, pick } from "./seed";
 
+// Body colors (the art is recolored to these by scripts/build-art.py); band = default shell band.
 export const BODY_COLORS = {
   coral: { base: "#F2734F", shadow: "#D95B3B", band: "#E8A36F" },
   teal: { base: "#3EBFB4", shadow: "#2A9E94", band: "#F2B38A" },
@@ -11,19 +12,8 @@ export const BODY_COLORS = {
   rose: { base: "#F07C93", shadow: "#D9627A", band: "#F2B38A" },
 } as const;
 
-export const SHINY_COLORS = { base: "#22416E", shadow: "#183256", band: "#EDBB52" } as const;
-
 export type BodyColor = keyof typeof BODY_COLORS;
 export const BODY_COLOR_NAMES = Object.keys(BODY_COLORS) as BodyColor[];
-
-export const EYE_STALKS = ["short", "medium", "long"] as const;
-export type EyeStalk = (typeof EYE_STALKS)[number];
-
-export const CLAW_RATIOS = [1, 1.3, 1.6] as const;
-export type ClawRatio = (typeof CLAW_RATIOS)[number];
-
-export const PATTERNS = ["none", "spots", "stripes", "freckles"] as const;
-export type Pattern = (typeof PATTERNS)[number];
 
 export const GENERIC_SHELLS = ["spiral", "conch", "round", "cone"] as const;
 export type GenericShell = (typeof GENERIC_SHELLS)[number];
@@ -38,9 +28,6 @@ export interface Traits {
   seed: number;
   shiny: boolean;
   bodyColor: BodyColor;
-  eyeStalk: EyeStalk;
-  clawRatio: ClawRatio;
-  pattern: Pattern;
   genericShell: GenericShell;
   /** Eight decorations in display order; the first N are shown for N contributors. */
   decorations: Decoration[];
@@ -56,9 +43,6 @@ export function traitsFromSeed(seed: number): Traits {
   // Draw order is part of the contract: changing it re-rolls every crab.
   const rng = createRng(seed);
   const bodyColor = pick(rng, BODY_COLOR_NAMES);
-  const eyeStalk = pick(rng, EYE_STALKS);
-  const clawRatio = pick(rng, CLAW_RATIOS);
-  const pattern = pick(rng, PATTERNS);
   const genericShell = pick(rng, GENERIC_SHELLS);
   const decorations = Array.from({ length: 8 }, () => pick(rng, DECORATIONS));
   const gifts: [Gift, Gift] = [pick(rng, GIFTS), pick(rng, GIFTS)];
@@ -67,9 +51,6 @@ export function traitsFromSeed(seed: number): Traits {
     seed,
     shiny: isShiny(seed),
     bodyColor,
-    eyeStalk,
-    clawRatio,
-    pattern,
     genericShell,
     decorations,
     gifts,
@@ -77,6 +58,3 @@ export function traitsFromSeed(seed: number): Traits {
   };
 }
 
-export function bodyPalette(traits: Traits) {
-  return traits.shiny ? SHINY_COLORS : BODY_COLORS[traits.bodyColor];
-}

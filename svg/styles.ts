@@ -9,14 +9,17 @@ const vars = (c: typeof LIGHT) =>
 const KEYFRAMES = `
 .sp-bob{animation:sp-bob 3s ease-in-out infinite}
 @keyframes sp-bob{50%{transform:translateY(-3px)}}
-.sp-blink{transform-box:fill-box;transform-origin:center;animation:sp-blink 5s infinite}
-@keyframes sp-blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.sp-eo{animation:sp-eo 5s steps(1,end) infinite}
+.sp-ec{opacity:0;animation:sp-ec 5s steps(1,end) infinite}
+@keyframes sp-eo{0%{opacity:1}93%{opacity:0}97%{opacity:1}}
+@keyframes sp-ec{0%{opacity:0}93%{opacity:1}97%{opacity:0}}
+.sp-d1{animation-delay:-.8s!important}.sp-d2{animation-delay:-1.6s!important}.sp-d3{animation-delay:-2.4s!important}
 .sp-jump{animation:sp-jump 1.1s ease-in-out infinite}
-@keyframes sp-jump{0%,100%{transform:translateY(0)}45%{transform:translateY(-16px)}}
+@keyframes sp-jump{0%,100%{transform:translateY(0)}45%{transform:translateY(-14px)}}
 .sp-shadow{transform-box:fill-box;transform-origin:center;animation:sp-shadow 1.1s ease-in-out infinite}
 @keyframes sp-shadow{45%{transform:scale(.7);opacity:.5}}
 .sp-fall{animation:sp-fall 2.6s linear infinite}
-@keyframes sp-fall{0%{transform:translateY(-8px) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(44px) rotate(160deg);opacity:0}}
+@keyframes sp-fall{0%{transform:translateY(-10px) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(70px) rotate(160deg);opacity:0}}
 .sp-z{animation:sp-z 3.6s ease-in infinite}
 @keyframes sp-z{0%{transform:translate(0,0);opacity:0}25%{opacity:1}100%{transform:translate(10px,-22px);opacity:0}}
 .sp-twinkle{transform-box:fill-box;transform-origin:center;animation:sp-twinkle 2.1s ease-in-out infinite}
@@ -24,10 +27,6 @@ const KEYFRAMES = `
 .sp-drift{animation:sp-drift 9s ease-in-out infinite alternate}
 .sp-drift2{animation:sp-drift 7s ease-in-out infinite alternate-reverse}
 @keyframes sp-drift{to{transform:translateX(-30px)}}
-.sp-cursor{animation:sp-cursor 1.1s steps(1) infinite}
-@keyframes sp-cursor{50%{opacity:0}}
-.sp-steam{animation:sp-steam 3s ease-in-out infinite}
-@keyframes sp-steam{0%{transform:translateY(4px);opacity:0}40%{opacity:1}100%{transform:translateY(-8px);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}`;
 
 export function styles(theme: Theme): string {
