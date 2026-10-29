@@ -1,0 +1,1 @@
+shell-pet: a tiny hermit crab for your README that grows with stars and reacts to commits
